@@ -11,6 +11,7 @@ import session from "express-session";
 import { createClient } from "redis";
 import { MyContext } from "./types";
 import { ApolloServerPluginLandingPageLocalDefault } from "apollo-server-core";
+import cors from "cors";
 
 const main = async () => {
   const orm = await MikroORM.init(config);
@@ -19,6 +20,24 @@ const main = async () => {
   let RedisStore = require("connect-redis")(session);
   let redisClient = createClient({ legacyMode: true });
   redisClient.connect().catch(console.error);
+
+  app.use((req, res, next) => {
+    res.append("Access-Control-Allow-Origin", ["http://localhost:3000"]);
+    res.append("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE");
+    res.append("Access-Control-Allow-Headers", "Content-Type");
+    res.set("Access-Control-Expose-Headers", "Access-Control-Allow-Origin");
+    next();
+  });
+
+  app.use(function (req, res, next) {
+    res.on("finish", () => {
+      console.log(`request url = ${req.originalUrl}`);
+      console.log(res.getHeaders());
+    });
+    next();
+  });
+
+  // app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
   app.use(
     session({
@@ -47,8 +66,6 @@ const main = async () => {
   });
 
   const apolloServer = new ApolloServer({
-    csrfPrevention: true,
-    plugins: [ApolloServerPluginLandingPageLocalDefault({ embed: true })],
     schema: await buildSchema({
       resolvers: [PostResolver, UserResolver],
       validate: false,
@@ -58,7 +75,10 @@ const main = async () => {
 
   await apolloServer.start();
 
-  apolloServer.applyMiddleware({ app });
+  apolloServer.applyMiddleware({
+    app,
+    cors: false,
+  });
 
   app.listen("4000", () => {
     console.log("server started on localhost:4000");
