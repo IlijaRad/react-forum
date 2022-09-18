@@ -9,17 +9,16 @@ type InputFieldProps = InputHTMLAttributes<HTMLInputElement> & {
 
 const InputField = ({ label, ...props }: InputFieldProps) => {
   const [field, { error }] = useField(props);
-  const { placeholder } = props;
   return (
     <>
-      <label htmlFor={field.name} className="block mb-3">
+      <label htmlFor={field.name} className="mb-3 block">
         {label}
       </label>
       <input
-        className="mb-3 border border-gray-500 px-3 py-2 rounded-md"
+        className="mb-3 rounded-md border border-gray-500 px-3 py-2"
         {...field}
+        {...props}
         id={field.name}
-        placeholder={placeholder}
       />
       {error && <div>{error}</div>}
     </>
